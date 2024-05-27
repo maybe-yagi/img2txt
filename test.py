@@ -1,9 +1,9 @@
 import open_clip
 import torch
+from googletrans import Translator
 from PIL import Image
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(device)
 model, preprocess, _ = open_clip.create_model_and_transforms(
     "coca_ViT-L-14",
     device=device,
@@ -27,4 +27,8 @@ caption = (
     .replace("<start_of_text>", "")
 )
 
-print(caption)
+# 翻訳
+translator = Translator()
+translated_text = translator.translate(caption, src="en", dest="ja").text
+
+print(caption, translated_text)
