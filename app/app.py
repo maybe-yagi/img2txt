@@ -12,7 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # Cocaの読み込み
-model, _, transform = open_clip.create_model_and_transforms(
+model, preprocess, _ = open_clip.create_model_and_transforms(
     "coca_ViT-L-14",
     pretrained="laion2b_s13b_b90k",
     device=device,
@@ -35,7 +35,7 @@ def register():
 @app.route("/photo_test")
 def photo_test():
     # 画像からキャプションを生成
-    im = transform(img).unsqueeze(0).to(device)
+    im = preprocess(img).unsqueeze(0).to(device)
     with torch.no_grad(), torch.cuda.amp.autocast():
         generated = model.generate(im, seq_len=20)
 
