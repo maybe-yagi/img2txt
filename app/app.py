@@ -14,7 +14,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Cocaの読み込み
 model, _, transform = open_clip.create_model_and_transforms(
     "coca_ViT-L-14",
-    pretrained="mscoco_finetued_laion2B-s13B-b90k",
+    pretrained="laion2b_s13b_b90k",
     device=device,
 )
 
