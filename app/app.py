@@ -1,5 +1,4 @@
-# 簡単なindexページの作成を行っています。
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import open_clip
 import torch
 from googletrans import Translator
@@ -23,16 +22,23 @@ model.eval()
 img = Image.open("./images/test.jpg").convert("RGB")
 
 
+# 翻訳用
+translator = Translator()
+
+
+# とりあえずのホーム
 @app.route("/")
 def index():
     return "index page"
 
 
+# APIでJSON返すテスト
 @app.route("/register")
 def register():
     return jsonify({"message": "test"})
 
 
+# 推論結果用テスト
 @app.route("/photo_test")
 def photo_test():
     im = preprocess(img).unsqueeze(0).to(device)
@@ -47,11 +53,40 @@ def photo_test():
     )
 
     # 翻訳
-    translator = Translator()
     translated_text = translator.translate(caption, src="en", dest="ja").text
 
     print(caption, translated_text)
 
     response = jsonify({"message": translated_text})
+
+    return response
+
+
+# 実際に使うAPI
+@app.route("/img2txt", methods=["POST", "GET"])
+def img2txt():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file"}), 400
+
+    file = request.files["file"]
+
+    if file.name == "":
+        return jsonify({"error": "No Selected file"}), 40
+
+    try:
+        img = Image.open(file.stream).convert("RGB")
+        im = preprocess(img).unsqueeze(0).to(device)
+        with torch.no_grad(), torch.cuda.amp.autocast():
+            generated = model.generate(im, seq_len=30)
+
+        caption = (
+            open_clip.decode(generated[0].detach())
+            .split("<end_of_text>")[0]
+            .replace("<start_of_text>", "")
+        )
+        translated_text = translator.translate(caption, src="en", dest="ja").text
+        response = jsonify({"message": translated_text})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
     return response
